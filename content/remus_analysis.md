@@ -1,16 +1,13 @@
 ---
 title: "What We Thought Was SMOKELOADER: Introducing REMUS"
+description: "Technical analysis of REMUS infostealer: full C2 protocol reconstruction from PCAP, five XOR string encryption schemes documented, Factory-v3 Go dropper, and IOC mapping across 10+ C2 domains."
+tags: [malware, reverse-engineering, infostealer, threat-intelligence, etherhiding, lumma]
 date: 2026-03-27
-tags:
-  - malware
-  - threat-intelligence
-draft: false
 ---
-
 # What We Thought Was SMOKELOADER: Introducing REMUS
 
 **Author:** Izan Pérez Perpén (aachum)
-**Date:** March 2026
+**Date:** 27 March 2026
 **TLP:** TLP:WHITE
 **Sample:** `Kemus.exe` / SHA256: `cfcb21d8df942918f7a74b99f2cccf7e54e2a6dd1ea6de60897ff0026a26b5c4`
 
@@ -20,7 +17,7 @@ draft: false
 
 REMUS is a previously undocumented malware family combining infostealer and loader capabilities with a C2 resolution mechanism based on the Ethereum blockchain. At runtime, REMUS queries a public Ethereum RPC endpoint and extracts the C2 address from the `result` field of the JSON-RPC response. The C2 infrastructure is anchored to blockchain state rather than DNS, making traditional takedown and sinkholing ineffective.
 
-The malware targets credentials from Chrome, Firefox, Steam, Outlook PST files, and the Windows clipboard. It captures screenshots via GDI and exfiltrates data over HTTP POST using a hardcoded Chrome 117 User-Agent. A loader component maps and executes a second-stage payload in memory without writing to disk.
+The malware targets credentials from Chrome, Firefox, Steam, and the Windows clipboard. It captures screenshots via GDI and exfiltrates data over HTTP POST using a hardcoded Chrome 117 User-Agent. A loader component maps and executes a second-stage payload in memory without writing to disk.
 
 The analysed sample is a 64-bit Windows PE with an internal build timestamp of March 19, 2026. It uses compile-time string encryption across at least five distinct XOR schemes, API hashing for import resolution, and control-flow obfuscation through chained two-entry jump tables.
 
@@ -108,7 +105,7 @@ Single logical branches require resolving chains of 10 to 15 dispatcher hops.
 | `0xc797d48f` | `WinHttpReceiveResponse` |
 | `0x86fffd1e` | `WinHttpCloseHandle` |
 | `0x4958ad19` | `WinHttpReadData` |
-
+REMUS checks for the presence of `honey@pot.com.pst` in `%UserProfile%\Documents\Outlook Files`. If found, execution terminates, the file serves as a sandbox environment indicator.
 ### 4. Mutex
 
 `sub_1400062d0` decrypts `\BaseNamedObjects\` and creates or opens a named mutex via hash `0xa3b73ba5` with `MUTEX_ALL_ACCESS` (`0x1f0003`). A global flag at `data_140034010` determines the execution branch. When the mutex already exists, the malware opens it with `SYNCHRONIZE | MUTEX_MODIFY_STATE` and continues rather than exiting.
@@ -171,8 +168,6 @@ The dispatcher in `sub_1400062d0` contains a branch that executes `jump(arg1)`, 
 **Firefox.** Six profile files targeted: `cert9.db`, `logins.json`, `cookies.sqlite`, `formhistory.sqlite`, `places.sqlite`, `prefs.js`.
 
 **Steam.** `InstallPath` read from `\REGISTRY\MACHINE\SOFTWARE\Valve\Steam` at `sub_14001c660`. `steam.exe` targeted at `sub_14001be90`.
-
-**Outlook.** `honey@pot.com.pst` indicates PST file targeting by filename pattern.
 
 **Clipboard.** `OpenClipboard` / `GetClipboardData` / `CloseClipboard` imported directly.
 
@@ -241,30 +236,29 @@ Stage 1: Kemus.exe (223KB)
 
 ## MITRE ATT&CK
 
-| Tactic | Technique | ID | Detail |
-|--------|-----------|-----|--------|
-| Defense Evasion | Obfuscated Files or Information | T1027 | Five-scheme string encryption, API hashing |
-| Defense Evasion | Masquerading | T1036 | Trojanized sechost.dll; Chrome 117 User-Agent |
-| Defense Evasion | Virtualization/Sandbox Evasion | T1497 | Dead loops, chained dispatchers |
-| Defense Evasion | Deobfuscate/Decode Files or Information | T1140 | Runtime string decryption |
-| Defense Evasion | Indicator Removal | T1562 | ETW manipulation in stage 2 |
-| Command and Control | Web Service | T1102 | C2 address in Ethereum smart contract |
-| Command and Control | Application Layer Protocol: Web Protocols | T1071.001 | HTTP POST via WinHTTP |
-| Command and Control | Non-Standard Port | T1571 | Ports 4219, 5902, 6573, 6782, 28313, 48261 |
-| Credential Access | Credentials from Password Stores | T1555 | Chrome, Firefox, Credential Manager, LSA |
-| Credential Access | Credentials from Password Stores: Windows Credential Manager | T1555.004 | Stage 2: `CredReadW`, `LsaRetrievePrivateData` |
-| Collection | Clipboard Data | T1115 | `GetClipboardData` |
-| Collection | Screen Capture | T1113 | GDI screen capture |
-| Collection | Email Collection | T1114 | PST file targeting |
-| Privilege Escalation | Abuse Elevation Control Mechanism | T1548 | `RunAsInvoker` UAC bypass |
-| Privilege Escalation | Access Token Manipulation: Token Impersonation | T1134.001 | `SeImpersonatePrivilege` via COM |
-| Execution | Command and Scripting Interpreter: PowerShell | T1059.001 | `powershell -exec bypass` |
-| Execution | System Binary Proxy Execution: Rundll32 | T1218.011 | `rundll32` |
-| Persistence | Shortcut Modification | T1547.009 | LNK manipulation |
-| Persistence | Create or Modify System Process: Windows Service | T1543.003 | Stage 2 service installation |
-| Discovery | System Information Discovery | T1082 | `GetComputerNameA`, hardware ID derivation |
-| Discovery | Process Discovery | T1057 | Process enumeration to `Processes.txt` |
-| Discovery | Query Registry | T1012 | Steam registry path |
+| Tactic               | Technique                                                    | ID        | Detail                                         |
+| -------------------- | ------------------------------------------------------------ | --------- | ---------------------------------------------- |
+| Defense Evasion      | Obfuscated Files or Information                              | T1027     | Five-scheme string encryption, API hashing     |
+| Defense Evasion      | Masquerading                                                 | T1036     | Trojanized sechost.dll; Chrome 117 User-Agent  |
+| Defense Evasion      | Virtualization/Sandbox Evasion                               | T1497     | Dead loops, chained dispatchers                |
+| Defense Evasion      | Deobfuscate/Decode Files or Information                      | T1140     | Runtime string decryption                      |
+| Defense Evasion      | Indicator Removal                                            | T1562     | ETW manipulation in stage 2                    |
+| Command and Control  | Web Service                                                  | T1102     | C2 address in Ethereum smart contract          |
+| Command and Control  | Application Layer Protocol: Web Protocols                    | T1071.001 | HTTP POST via WinHTTP                          |
+| Command and Control  | Non-Standard Port                                            | T1571     | Ports 4219, 5902, 6573, 6782, 28313, 48261     |
+| Credential Access    | Credentials from Password Stores                             | T1555     | Chrome, Firefox, Credential Manager, LSA       |
+| Credential Access    | Credentials from Password Stores: Windows Credential Manager | T1555.004 | Stage 2: `CredReadW`, `LsaRetrievePrivateData` |
+| Collection           | Clipboard Data                                               | T1115     | `GetClipboardData`                             |
+| Collection           | Screen Capture                                               | T1113     | GDI screen capture                             |
+| Privilege Escalation | Abuse Elevation Control Mechanism                            | T1548     | `RunAsInvoker` UAC bypass                      |
+| Privilege Escalation | Access Token Manipulation: Token Impersonation               | T1134.001 | `SeImpersonatePrivilege` via COM               |
+| Execution            | Command and Scripting Interpreter: PowerShell                | T1059.001 | `powershell -exec bypass`                      |
+| Execution            | System Binary Proxy Execution: Rundll32                      | T1218.011 | `rundll32`                                     |
+| Persistence          | Shortcut Modification                                        | T1547.009 | LNK manipulation                               |
+| Persistence          | Create or Modify System Process: Windows Service             | T1543.003 | Stage 2 service installation                   |
+| Discovery            | System Information Discovery                                 | T1082     | `GetComputerNameA`, hardware ID derivation     |
+| Discovery            | Process Discovery                                            | T1057     | Process enumeration to `Processes.txt`         |
+| Discovery            | Query Registry                                               | T1012     | Steam registry path                            |
 
 ---
 
@@ -383,7 +377,7 @@ User-Agent: `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML
 | SHA256 | `352721b32ec1c8349985ceccfec8d1ca6e3e6cc12f83350c4ae1a75477588bc2` | Stage 2 memory dump              |
 | MD5    | `65b650d78cbf74f17a1f5c139d5ab278`                                 | Internal `tag=` value in stage 1 |
 | String | `# REMUS LOG`                                                      | Internal build marker            |
-| String | `honey@pot.com.pst`                                                | PST targeting artifact           |
+| String | `honey@pot.com.pst`                                                | Anti-sandbox check               |
 
 ---
 
