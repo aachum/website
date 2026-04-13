@@ -1,3 +1,5 @@
+@use "./base.scss";
+
 pre {
   border-left: 2px solid var(--secondary) !important;
 }
@@ -31,7 +33,4 @@ blockquote {
   opacity: 0.95;
 }
 
-code:not(pre code) {
-  color: var(--secondary);
-  background-color: var(--highlight);
-}
+code:not(p
