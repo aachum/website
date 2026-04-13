@@ -33,4 +33,7 @@ blockquote {
   opacity: 0.95;
 }
 
-code:not(p
+code:not(pre code) {
+  color: var(--secondary);
+  background-color: var(--highlight);
+}
