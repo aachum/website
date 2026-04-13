@@ -1,3 +1,47 @@
-@use "./base.scss";
+// Mint + Amber theme refinements
 
-// put your custom CSS here!
+// Code blocks con borde verde menta
+pre {
+  border-left: 2px solid var(--secondary) !important;
+}
+
+// Links con subrayado verde
+a {
+  text-decoration-color: var(--secondary);
+  text-underline-offset: 3px;
+}
+
+// Tablas con hover verde sutil
+table tr:hover {
+  background-color: var(--highlight);
+}
+
+// Headers con separador sutil
+h1, h2, h3 {
+  border-bottom: 1px solid var(--lightgray);
+  padding-bottom: 0.2em;
+}
+
+// Tags con color ámbar
+.tag-link {
+  color: var(--tertiary) !important;
+  border-color: var(--tertiary) !important;
+  opacity: 0.9;
+}
+
+// Fecha y metadatos en ámbar
+.meta, .content-meta {
+  color: var(--tertiary);
+}
+
+// Blockquotes con acento ámbar
+blockquote {
+  border-left: 2px solid var(--tertiary) !important;
+  opacity: 0.95;
+}
+
+// Inline code con tinte verde
+code:not(pre code) {
+  color: var(--secondary);
+  background-color: var(--highlight);
+}
