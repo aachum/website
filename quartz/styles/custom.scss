@@ -1,5 +1,13 @@
 @use "./base.scss";
 
+:root {
+  color-scheme: dark;
+}
+
+[saved-theme="light"] {
+  color-scheme: light;
+}
+
 pre {
   border-left: 2px solid var(--secondary) !important;
 }
