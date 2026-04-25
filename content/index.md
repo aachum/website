@@ -11,4 +11,4 @@ Research is conducted under TLP:WHITE unless otherwise noted.
 
 ## Recent
 
-- [[remus_analysis|REMUS: EtherHiding C2, Protocol Analysis, and Multi-Sample Infrastructure Mapping]]
+- [[remus_analysis|What We Thought Was SMOKELOADER: Introducing REMUS]]
