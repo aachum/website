@@ -145,7 +145,7 @@ The contract address is not present in the binary in any form. TLS 1.3 encryptio
 
 #### 7.3 C2 Protocol
 
-PCAP from a sandbox run captured plaintext HTTP to `adveryx.biz:6573`, allowing full protocol reconstruction:
+PCAP from a sandbox run captured plaintext HTTP to `adveryx.biz:6573`, allowing partial protocol reconstruction:
 
 | Step | Body | Response |
 |------|------|----------|
